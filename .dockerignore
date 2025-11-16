@@ -1,0 +1,14 @@
+Dockerfile
+.dockerignore
+.git
+.gitignore
+.vs
+.vscode
+bin/
+obj/
+*.user
+*.aps
+*.pdb
+*.cache.xml
+appsettings.Development.json
+README.md
