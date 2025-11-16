@@ -1,0 +1,40 @@
+
+
+[200~# Secrets and configuration
+Keys/
+appsettings.Development.json
+appsettings.Production.json
+*.user
+
+
+
+cat > .gitignore << 'EOF'
+# Secrets and configuration
+Keys/
+appsettings.Development.json
+appsettings.Production.json
+*.user
+*.aps
+
+# Build outputs
+bin/
+obj/
+Debug/
+Release/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+
+# Visual Studio
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime data
+publish/

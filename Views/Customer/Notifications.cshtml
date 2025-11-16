@@ -1,0 +1,391 @@
+﻿@model List<TheRockWasteManagement.Controllers.Notification>
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - The Rock Waste Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c786c;
+            --secondary: #ff9800;
+            --success: #28a745;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --danger: #dc3545;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), #004445);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .notification-item {
+            border-left: 4px solid var(--info);
+            padding: 20px;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .notification-item:hover {
+                transform: translateX(5px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            }
+
+            .notification-item.success {
+                border-left-color: var(--success);
+            }
+
+            .notification-item.warning {
+                border-left-color: var(--warning);
+            }
+
+            .notification-item.danger {
+                border-left-color: var(--danger);
+            }
+
+            .notification-item.info {
+                border-left-color: var(--info);
+            }
+
+            .notification-item.unread {
+                background: linear-gradient(135deg, #f8f9ff, #e3f2fd);
+                border-left-width: 6px;
+            }
+
+        .notification-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .icon-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+
+        .icon-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+        }
+
+        .icon-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+
+        .icon-info {
+            background: rgba(23, 162, 184, 0.1);
+            color: var(--info);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+            .empty-state i {
+                font-size: 4rem;
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+
+        .badge-new {
+            background: var(--danger);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .filter-buttons .btn {
+            border-radius: 20px;
+            margin: 0 5px 10px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #004445);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/Customer/Dashboard">
+                <i class="fas fa-recycle me-2"></i>The Rock Waste Management
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a href="/Customer/Dashboard" class="nav-link me-3">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i> @ViewBag.UserEmail
+                </span>
+                <form asp-controller="Customer" asp-action="Logout" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold"><i class="fas fa-bell me-3"></i>Notifications</h1>
+                    <p class="lead mb-0">Stay updated with your service alerts and important announcements</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-light" onclick="markAllAsRead()">
+                            <i class="fas fa-check-double me-1"></i>Mark All Read
+                        </button>
+                        <button class="btn btn-outline-light" onclick="refreshNotifications()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Content -->
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Filter Buttons -->
+                <div class="filter-buttons text-center mb-4">
+                    <button class="btn btn-outline-primary active" onclick="filterNotifications('all')">
+                        All Notifications
+                    </button>
+                    <button class="btn btn-outline-success" onclick="filterNotifications('unread')">
+                        Unread Only
+                    </button>
+                    <button class="btn btn-outline-info" onclick="filterNotifications('read')">
+                        Read Only
+                    </button>
+                </div>
+
+                <!-- Notifications List -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Recent Alerts
+                            <span class="badge bg-primary ms-2">@Model.Count</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Any())
+                        {
+                            <div id="notificationsList">
+                                @foreach (var notification in Model)
+                                {
+                                    <div class="notification-item @notification.Type @(!notification.IsRead ? "unread" : "")"
+                                         data-notification-id="@notification.Id"
+                                         onclick="markAsRead('@notification.Id')">
+                                        <div class="d-flex align-items-start">
+                                            <div class="notification-icon icon-@notification.Type">
+                                                @if (notification.Type == "success")
+                                                {
+                                                    <i class="fas fa-check-circle fa-lg"></i>
+                                                }
+                                                else if (notification.Type == "warning")
+                                                {
+
+                                                    <i class="fas fa-exclamation-triangle fa-lg"></i>
+                                                }
+                                                else if (notification.Type == "danger")
+                                                {
+
+                                                    <i class="fas fa-times-circle fa-lg"></i>
+                                                }
+                                                else
+                                                {
+
+                                                    <i class="fas fa-info-circle fa-lg"></i>
+                                                }
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h6 class="mb-0 fw-bold">@notification.Title</h6>
+                                                    <div>
+                                                        @if (!notification.IsRead)
+                                                        {
+                                                            <span class="badge-new">NEW</span>
+                                                        }
+                                                        <small class="text-muted ms-2">@notification.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</small>
+                                                    </div>
+                                                </div>
+                                                <p class="mb-0 text-muted">@notification.Message</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <i class="fas fa-bell-slash"></i>
+                                <h4>No Notifications</h4>
+                                <p>You're all caught up! New alerts will appear here.</p>
+                                <a href="/Customer/Dashboard" class="btn btn-primary mt-3">
+                                    <i class="fas fa-home me-1"></i>Back to Dashboard
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-plus fa-2x text-primary mb-3"></i>
+                                <h6>Book Service</h6>
+                                <a href="/Customer/BookCleaning" class="btn btn-sm btn-outline-primary">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-history fa-2x text-success mb-3"></i>
+                                <h6>View History</h6>
+                                <a href="/Customer/BookingHistory" class="btn btn-sm btn-outline-success">View</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-headset fa-2x text-info mb-3"></i>
+                                <h6>Get Support</h6>
+                                <a href="/Customer/Support" class="btn btn-sm btn-outline-info">Contact</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function markAsRead(notificationId) {
+            fetch('/Customer/MarkNotificationRead', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `notificationId=${notificationId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                    notificationElement.classList.remove('unread');
+                    const badge = notificationElement.querySelector('.badge-new');
+                    if (badge) badge.remove();
+
+                    // Update notification count in navbar
+                    updateNotificationCount();
+                }
+            });
+        }
+
+        function markAllAsRead() {
+            const unreadNotifications = document.querySelectorAll('.notification-item.unread');
+            unreadNotifications.forEach(notification => {
+                const notificationId = notification.getAttribute('data-notification-id');
+                markAsRead(notificationId);
+            });
+        }
+
+        function filterNotifications(filter) {
+            const notifications = document.querySelectorAll('.notification-item');
+            notifications.forEach(notification => {
+                switch (filter) {
+                    case 'unread':
+                        notification.style.display = notification.classList.contains('unread') ? 'block' : 'none';
+                        break;
+                    case 'read':
+                        notification.style.display = !notification.classList.contains('unread') ? 'block' : 'none';
+                        break;
+                    default:
+                        notification.style.display = 'block';
+                        break;
+                }
+            });
+
+            // Update active filter button
+            document.querySelectorAll('.filter-buttons .btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function refreshNotifications() {
+            window.location.reload();
+        }
+
+        function updateNotificationCount() {
+            // This would typically update a counter in your navbar
+            const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+            console.log(`Unread notifications: ${unreadCount}`);
+        }
+
+        // Auto-refresh every 2 minutes
+        setInterval(refreshNotifications, 120000);
+    </script>
+</body>
+</html>

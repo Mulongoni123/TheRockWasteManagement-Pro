@@ -1,0 +1,423 @@
+﻿@{
+    ViewData["Title"] = "Customer Dashboard";
+    Layout = null;
+
+    var stats = ViewBag.Stats as TheRockWasteManagement.Controllers.CustomerStats;
+    var notifications = ViewBag.Notifications as List<TheRockWasteManagement.Controllers.Notification>;
+    var customerName = ViewBag.CustomerName as string ?? "Customer";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - The Rock Waste Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c786c;
+            --secondary: #ff9800;
+            --success: #28a745;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary), #004445);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), #004445);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .alert-warning-custom {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffecb5;
+            border-radius: 12px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .notification-item {
+            border-left: 4px solid var(--info);
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+            .notification-item.success {
+                border-left-color: var(--success);
+            }
+
+            .notification-item.warning {
+                border-left-color: var(--warning);
+            }
+
+            .notification-item.danger {
+                border-left-color: #dc3545);
+            }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+
+        .welcome-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-recycle me-2"></i>The Rock Waste Management
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a href="/Customer/Notifications" class="nav-link position-relative me-3">
+                    <i class="fas fa-bell"></i>
+                    @if (notifications?.Count(n => !n.IsRead) > 0)
+                    {
+                        <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
+                    }
+                </a>
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i> @ViewBag.UserEmail
+                </span>
+                <form asp-controller="Customer" asp-action="Logout" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Email Verification Alert -->
+    @if (ViewBag.EmailVerified == false)
+    {
+        <div class="container mt-4">
+            <div class="alert alert-warning-custom alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading mb-1">Email Verification Required</h5>
+                        <p class="mb-2">Please verify your email address to access all features and receive important service notifications.</p>
+                        <button type="button" class="btn btn-sm btn-warning" onclick="resendVerification()">
+                            <i class="fas fa-redo me-1"></i>Resend Verification Email
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold">Welcome, @customerName!</h1>
+                    <p class="lead mb-0">Manage your waste collection services and keep your environment clean</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="stat-card text-white" style="background: rgba(255,255,255,0.2);">
+                        <i class="fas fa-user-circle fa-2x mb-2"></i>
+                        <h4 class="mb-1">Customer</h4>
+                        <small>@ViewBag.UserEmail</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Message -->
+    <div class="container">
+        <div class="welcome-message">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4><i class="fas fa-sparkles me-2"></i>Smart Waste Management</h4>
+                    <p class="mb-0">Book cleanings, track progress, and manage payments all in one place. Your clean environment is just a click away!</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <a href="/Customer/BookCleaning" class="btn btn-light">
+                            <i class="fas fa-plus me-1"></i>New Booking
+                        </a>
+                        <a href="/Customer/BookingHistory" class="btn btn-outline-light">
+                            <i class="fas fa-history me-1"></i>History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="container mb-5">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-calendar-check fa-2x text-primary mb-2"></i>
+                    <p class="stats-number text-primary">@(stats?.ScheduledCount ?? 0)</p>
+                    <p class="text-muted mb-0">Scheduled</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <p class="stats-number text-success">@(stats?.CompletedCount ?? 0)</p>
+                    <p class="text-muted mb-0">Completed</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <p class="stats-number text-warning">@(stats?.PendingCount ?? 0)</p>
+                    <p class="text-muted mb-0">Pending</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-truck fa-2x text-info mb-2"></i>
+                    <p class="stats-number text-info">@(stats?.InProgressCount ?? 0)</p>
+                    <p class="text-muted mb-0">In Progress</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Notifications -->
+    @if (notifications?.Count > 0)
+    {
+        <div class="container mb-5">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Recent Notifications</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var notification in notifications.Take(3))
+                    {
+                        <div class="notification-item @notification.Type">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">@notification.Title</h6>
+                                    <p class="mb-1">@notification.Message</p>
+                                    <small class="text-muted">@notification.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</small>
+                                </div>
+                                @if (!notification.IsRead)
+                                {
+                                    <span class="badge bg-warning">New</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (notifications.Count > 3)
+                    {
+                        <div class="text-center mt-3">
+                            <a href="/Customer/Notifications" class="btn btn-sm btn-outline-primary">View All Notifications</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Main Features -->
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a href="/Customer/BookCleaning" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon">
+                                <i class="bi bi-bucket-fill"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">Book a Cleaning</h5>
+                            <p class="card-text text-muted">Schedule your next dustbin or carpet cleaning service at your convenience.</p>
+                            <div class="mt-3">
+                                <span class="btn btn-primary">Book Now</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="/Customer/BookingHistory" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">Booking History</h5>
+                            <p class="card-text text-muted">View your past cleaning bookings, status updates, and service details.</p>
+                            <div class="mt-3">
+                                <span class="btn btn-success">View History</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="/Customer/MakePayment" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon">
+                                <i class="bi bi-credit-card-fill"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">Make a Payment</h5>
+                            <p class="card-text text-muted">Securely pay for your scheduled or completed services online.</p>
+                            <div class="mt-3">
+                                <span class="btn btn-warning">Pay Now</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Additional Features Row -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <a href="/Customer/Profile" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon" style="background: linear-gradient(135deg, #6c757d, #495057);">
+                                <i class="fas fa-user-cog"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">Profile Settings</h5>
+                            <p class="card-text text-muted">Update your personal information and preferences.</p>
+                            <div class="mt-3">
+                                <span class="btn btn-secondary">Manage Profile</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="/Customer/Support" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">Customer Support</h5>
+                            <p class="card-text text-muted">Get help with your services or report any issues.</p>
+                            <div class="mt-3">
+                                <span class="btn btn-info">Get Support</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="/Customer/Notifications" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon" style="background: linear-gradient(135deg, #e83e8c, #d91a72);">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">Notifications</h5>
+                            <p class="card-text text-muted">View service updates and important announcements.</p>
+                            <div class="mt-3">
+                                <span class="btn btn-pink" style="background: #e83e8c; color: white;">View Alerts</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-refresh script -->
+    <script>
+        // Auto-refresh dashboard every 30 seconds for real-time updates
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+
+        // Firebase initialization and verification functions
+        // ... (keep your existing Firebase scripts)
+    </script>
+</body>
+</html>
