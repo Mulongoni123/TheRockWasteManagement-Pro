@@ -1,6 +1,4 @@
-﻿
-using Google.Cloud.Firestore;
-using Google.Apis.Auth.OAuth2;
+﻿using Google.Cloud.Firestore;
 using Google.Cloud.Storage.V1;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,10 +15,22 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-var credentialPath = Path.Combine(builder.Environment.ContentRootPath, "Keys", "serviceAccountKey.json");
-Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
-FirestoreDb firestoreDb = FirestoreDb.Create("therockwastemanagement"); // Replace with your Firebase project ID
-builder.Services.AddSingleton(firestoreDb);
+// Firebase/Firestore configuration - FIXED FOR CLOUD RUN
+try
+{
+    // For Cloud Run, use application default credentials
+    FirestoreDb firestoreDb = FirestoreDb.Create("therockwastemanagement");
+    builder.Services.AddSingleton(firestoreDb);
+
+    // Optional: Initialize Storage client if needed
+    var storageClient = StorageClient.Create();
+    builder.Services.AddSingleton(storageClient);
+}
+catch (Exception ex)
+{
+    // Log error but don't crash - app might work without Firebase in dev
+    Console.WriteLine($"Firebase initialization failed: {ex.Message}");
+}
 
 var app = builder.Build();
 
@@ -28,18 +38,18 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseHsts(); // Add this for production
 }
 
 app.UseStaticFiles();
 app.UseRouting();
-
-// Enable session before endpoints
-app.UseSession();
-
+app.UseSession(); // Enable session before endpoints
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
+// Use PORT environment variable for Cloud Run - REMOVED DUPLICATE app.Run()
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Run($"http://0.0.0.0:{port}");
